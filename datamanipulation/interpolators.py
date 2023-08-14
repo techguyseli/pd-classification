@@ -19,7 +19,7 @@ def get_data_shape(X):
     return num_points_per_img
 
 
-def nn_interpolation(X):
+def nearest_neighbour_interpolation(X):
     pass
 
 

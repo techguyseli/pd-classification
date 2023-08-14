@@ -1,4 +1,3 @@
 pandas
-python-matplotlib
 numpy
-cv2
+tensorflow
