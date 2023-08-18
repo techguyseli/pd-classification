@@ -1,4 +1,4 @@
-def isParkinsonian(participantInfo):
+def is_parkinsonian(participantInfo):
     """
     Check if a participant is parkinsonian or not.
 

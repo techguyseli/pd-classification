@@ -1,8 +1,8 @@
-from .basics import isParkinsonian
+from .helpers import is_parkinsonian
 import numpy as np
 
 
-def getPdImgs(info_o, data_o):
+def get_pd_images(info, data):
     """
     Return data as images for use when training a model.
 
@@ -15,9 +15,6 @@ def getPdImgs(info_o, data_o):
     """
     print('Processing started, please wait.')
 
-    info = info_o.copy()
-    data = data_o.copy()
-
     X = list()
     y = list()
 
@@ -25,7 +22,7 @@ def getPdImgs(info_o, data_o):
 
     for p in participants:
         p_info = info.loc[p]
-        parkinsonian = isParkinsonian(p_info)
+        parkinsonian = is_parkinsonian(p_info)
         if parkinsonian == -1:
             continue
 

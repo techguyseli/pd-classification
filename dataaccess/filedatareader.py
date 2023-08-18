@@ -14,9 +14,9 @@ class FileDataReader:
 
 
     def __init__(self, parent_dir, french_dir_name="HW-FRENCH", info_filename="Info.txt",
-    tasks_filenames=["Test1.txt", "Test2.txt", "Test3.txt", "Test4.txt", "Test5.txt", "Test6.txt", "Test7.txt"],
+    french_tasks=["Test1.txt", "Test2.txt", "Test3.txt", "Test4.txt", "Test5.txt", "Test6.txt", "Test7.txt"],
     data_header=['Time', 'X', 'Y', 'P', 'Az', 'Al'],
-    header_reg=r'.*[tT]ime.*[xX].*[yY].*[pP].*[aA]z.*[aA]l.*'):
+    header_reg=r'^[ \t]*Time[ \t]+X'):
         """
         Initializes a new FileDataReader.
 
@@ -24,14 +24,14 @@ class FileDataReader:
             parent_dir (str): The parent directory of the data files.
             french_dir_name (str): The french data directory name, defaults to 'HW-FRENCH'.
             info_filename (str): The name of the info file for each participant, defaults to 'Info.txt'.
-            tasks_filenames (list): The ordered list of tasks' files' names, defaults to ['Test1.txt', 'Test2.txt', 'Test3.txt', 'Test4.txt', 'Test5.txt', 'Test6.txt', 'Test7.txt'].
+            french_tasks (list): The ordered list of french tasks' files' names, defaults to ['Test1.txt', 'Test2.txt', 'Test3.txt', 'Test4.txt', 'Test5.txt', 'Test6.txt', 'Test7.txt'].
             data_header (list): The ordered headers of the tasks' data, defaults to ['Time', 'X', 'Y', 'P', 'Az', 'Al'].
             header_reg (regex str): The regular expression used to capture the header of the data in a task file, defaults to r'.*[tT]ime.*[xX].*[yY].*[pP].*[aA]z.*[aA]l.*'.
         """
         self.parent_dir = Path(parent_dir)
         self.french_dir = self.parent_dir / french_dir_name
         self.info_filename = info_filename
-        self.tasks_filenames = tasks_filenames
+        self.french_tasks = french_tasks
         self.data_header = data_header
         self.header_reg = header_reg
 
@@ -86,7 +86,7 @@ class FileDataReader:
 
         tasks_data = list()
         for i in indexes:
-            task_file_path = tasks_dir / self.tasks_filenames[i]
+            task_file_path = tasks_dir / self.french_tasks[i]
 
             if not task_file_path.exists():
                 continue
