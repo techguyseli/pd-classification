@@ -1,4 +1,4 @@
-def is_parkinsonian(participantInfo):
+def is_parkinsonian(participant_series):
     """
     Check if a participant is parkinsonian or not.
 
@@ -8,15 +8,15 @@ def is_parkinsonian(participantInfo):
     Returns:
         result (int): 1 if parkinsonian, 0 if healthy and -1 if has other dementia.
     """
-    if participantInfo.index.__contains__('Pathology') and isinstance(participantInfo['Pathology'], str):
-        if participantInfo['Pathology'].lower() == 'none':
+    if participant_series.index.__contains__('Pathology') and isinstance(participant_series['Pathology'], str):
+        if participant_series['Pathology'].lower() == 'none':
             return 0
-        elif participantInfo['Pathology'].lower() == 'parkinson':
+        elif participant_series['Pathology'].lower() == 'parkinson':
             return 1
     else:
-        if participantInfo['Dementia'].lower() == 'no':
+        if participant_series['Dementia'].lower() == 'no':
             return 0
-        elif participantInfo['Other Dementia'].lower() == 'parkinson':
+        elif participant_series['Other Dementia'].lower() == 'parkinson':
             return 1
     return -1
 

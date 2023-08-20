@@ -194,7 +194,10 @@ class FileDataReader:
             data = data + participant_data if not info_only else None
 
         info = self._generate_info_dataframe(info) if not data_only else None
-        data = self._generate_tasks_dataframe(data) if not info_only else None
+        
+        if not info_only:
+            data = self._generate_tasks_dataframe(data)
+            data['Language'] = 'French'
 
         print("Data loaded successfully.")
 
