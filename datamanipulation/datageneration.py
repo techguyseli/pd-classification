@@ -22,25 +22,32 @@ def get_pd_hc_only(info, data, keep_label=True):
 
     info[label_key] = info.apply(is_parkinsonian, axis=1)
     info = info[info[label_key]>=0]
-    data = info[[label_key]].merge(data, left_index=True, right_index=True)
+    data = data.reset_index(['Language', 'Task'])
+    data = info[[label_key]].merge(data, left_on='ID', right_on='ID')
 
     if not keep_label:
         info.drop(label_key, axis=1, inplace=True)
         data.drop(label_key, axis=1, inplace=True)
+    
+    data.reset_index('ID', inplace=True)
+    data.set_index(['ID', 'Language', 'Task'], inplace=True)
 
     return info, data
 
 
 def stratified_train_test_split(info, data, label_key, test_size=0.3, random_state=42):
-    data_participants = data[[label_key]].groupby('ID').first()
+    data_participants = data[[label_key]].groupby(['ID', 'Language', 'Task']).first()
 
     X = data_participants.index
     y = data_participants[label_key]
 
     X_train, X_test, y_train, y_test = sktts(X, y, stratify=y, random_state=random_state)
 
-    info_train = info.loc[X_train]
-    info_test = info.loc[X_test]
+    info_X_train = np.apply_along_axis(lambda x: list(x), 0, X_train)[:,0]
+    info_X_test = np.apply_along_axis(lambda x: list(x), 0, X_test)[:,0]
+
+    info_train = info.loc[info_X_train]
+    info_test = info.loc[info_X_test]
     data_train = data.loc[X_train]
     data_test = data.loc[X_test]
 

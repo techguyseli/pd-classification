@@ -122,34 +122,32 @@ class FileDataReader:
         return tasks_data
 
 
-    def _generate_info_dataframe(self, info):
+    def _postprocess_info_dataframe(self, info):
         """
         Turn the python object info into a pandas dataframe.
 
         Args:
-            info (list): A list containing the participants info.
+            info (pandas.core.frame.DataFrame): A dataframe containing the participants info.
 
         Returns:
             info (pandas.core.frame.DataFrame): A DataFrame of the information of all the participants.
         """
-        info = pd.DataFrame(info)
         info.set_index('ID', inplace=True)
 
         return info
 
 
-    def _generate_tasks_dataframe(self, data):
+    def _postprocess_tasks_dataframe(self, data):
         """
         Turn the python object data into a pandas dataframe.
 
         Args:
-            data (list): A list containing the participants' tasks' data.
+            data (pandas.core.frame.DataFrame): A dataframe containing the participants' tasks' data.
 
         Returns:
             data (pandas.core.frame.DataFrame): A DataFrame conversion of the input.
         """
-        data = pd.DataFrame(data)
-        data.set_index('ID', inplace=True)
+        data.set_index(['ID', 'Language', 'Task'], inplace=True)
 
         return data
 
@@ -193,11 +191,14 @@ class FileDataReader:
 
             data = data + participant_data if not info_only else None
 
-        info = self._generate_info_dataframe(info) if not data_only else None
+        if not data_only:
+            info = pd.DataFrame(info)
+            info = self._postprocess_info_dataframe(info)
         
         if not info_only:
-            data = self._generate_tasks_dataframe(data)
+            data = pd.DataFrame(data)
             data['Language'] = 'French'
+            data = self._postprocess_tasks_dataframe(data)
 
         print("Data loaded successfully.")
 
