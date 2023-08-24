@@ -1,6 +1,7 @@
 from .helpers import is_parkinsonian
 import numpy as np
 from sklearn.model_selection import train_test_split as sktts
+from dataaccess.filedatareader import FileDataReader
 
 
 def get_pd_hc_only(info, data, keep_label=True):
@@ -16,7 +17,7 @@ def get_pd_hc_only(info, data, keep_label=True):
         info (pandas.core.frame.DataFrame): The filtered info dataframe.
         data (pandas.core.frame.DataFrame): The filtered data dataframe.
     """
-    label_key = 'PD/HC'
+    label_key = 'PD'
     if label_key in info.columns:
         return info, data
 
@@ -30,7 +31,7 @@ def get_pd_hc_only(info, data, keep_label=True):
         data.drop(label_key, axis=1, inplace=True)
     
     data.reset_index('ID', inplace=True)
-    data.set_index(['ID', 'Language', 'Task'], inplace=True)
+    data = FileDataReader('.')._postprocess_tasks_dataframe(data)
 
     return info, data
 
@@ -48,8 +49,8 @@ def stratified_train_test_split(info, data, label_key, test_size=0.3, random_sta
 
     info_train = info.loc[info_X_train]
     info_test = info.loc[info_X_test]
-    data_train = data.loc[X_train]
-    data_test = data.loc[X_test]
+    data_train = data.loc[X_train].sort_index()
+    data_test = data.loc[X_test].sort_index()
 
     return info_train, info_test, data_train, data_test
 

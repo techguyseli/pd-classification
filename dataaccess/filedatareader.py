@@ -148,6 +148,7 @@ class FileDataReader:
             data (pandas.core.frame.DataFrame): A DataFrame conversion of the input.
         """
         data.set_index(['ID', 'Language', 'Task'], inplace=True)
+        data.sort_index(inplace=True)
 
         return data
 
