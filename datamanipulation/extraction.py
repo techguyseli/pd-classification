@@ -121,16 +121,16 @@ feature_extraction_pipe = Pipeline([
     ('dist_y', DistanceExtractor('Y')),
     ('dist_xy', DistanceExtractor(('X', 'Y'))),
     
-    ('ch_dist_x', ChangeExtractor('Distance x')),
-    ('ch_dist_y', ChangeExtractor('Distance y')),
+    ('ch_disp_x', ChangeExtractor('Displacement x')),
+    ('ch_disp_y', ChangeExtractor('Displacement y')),
     ('ch_dist_xy', ChangeExtractor('Distance x-y')),
 
-    ('ch_dist_x2', ChangeExtractor('Change distance x', new_col_name="2nd change distance x")),
-    ('ch_dist_y2', ChangeExtractor('Change distance y', new_col_name="2nd change distance y")),
+    ('ch_disp_x2', ChangeExtractor('Change displacement x', new_col_name="2nd change displacement x")),
+    ('ch_disp_y2', ChangeExtractor('Change displacement y', new_col_name="2nd change displacement y")),
     ('ch_dist_xy2', ChangeExtractor('Change distance x-y', new_col_name="2nd change distance x-y")),
 
-    ('ch_dist_x3', ChangeExtractor("2nd change distance x", new_col_name="3rd change distance x")),
-    ('ch_dist_y3', ChangeExtractor("2nd change distance y", new_col_name="3rd change distance y")),
+    ('ch_disp_x3', ChangeExtractor("2nd change displacement x", new_col_name="3rd change displacement x")),
+    ('ch_disp_y3', ChangeExtractor("2nd change displacement y", new_col_name="3rd change displacement y")),
     ('ch_dist_xy3', ChangeExtractor("2nd change distance x-y", new_col_name="3rd change distance x-y")),
 
     ('ch_press', ChangeExtractor('P')),
@@ -168,6 +168,7 @@ def extract_features(data, pipe=feature_extraction_pipe):
 
         data_extracted = pd.concat([data_extracted, ext_img])
     
-    print('The following features were extracted successfully:', data_extracted.columns[7:])
+    print('The following features were extracted successfully:\n', data_extracted.columns[7:])
+    print('Number of features:', data_extracted.columns[7:].shape[0])
 
     return data_extracted
