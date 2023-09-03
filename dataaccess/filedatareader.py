@@ -133,6 +133,7 @@ class FileDataReader:
             info (pandas.core.frame.DataFrame): A DataFrame of the information of all the participants.
         """
         info.set_index('ID', inplace=True)
+        info['Age'] = info['Age'].astype(int)
 
         return info
 

@@ -53,7 +53,7 @@ class ConvSmoothingExtractor(BaseEstimator, TransformerMixin):
 
 
 class ROCExtractor(BaseEstimator, TransformerMixin):
-    def __init__(self, numerator_key, denominator_key, handle_inf=None, new_col_name=None):
+    def __init__(self, numerator_key, denominator_key, handle_inf=True, new_col_name=None):
         """
         Initilize the rate of change extractor.
 
@@ -70,6 +70,16 @@ class ROCExtractor(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
+    def handle_inf_val(self, x, lowest_finite, highest_finite):
+            if np.isneginf(x):
+                return lowest_finite
+            elif np.isposinf(x):
+                return highest_finite
+            elif np.isnan(x):
+                return 0
+            else:
+                return x
+
     def transform(self, X, y=None):
         X_copy = X.copy()
         num_change_ext = ChangeExtractor(self.numerator_key)
@@ -77,9 +87,11 @@ class ROCExtractor(BaseEstimator, TransformerMixin):
         num_change = num_change_ext.transform(X_copy)[num_change_ext.new_col_name]
         denom_change = denom_change_ext.transform(X_copy)[denom_change_ext.new_col_name]
         roc = num_change / denom_change
-        X_copy[self.new_col_name] = roc
         if self.handle_inf:
-            X_copy[self.new_col_name] = X_copy[self.new_col_name].apply(self.handle_inf)
+            highest_finite = roc.sort_values().unique()[-3 if True in roc.isna().unique() else -2]
+            lowest_finite = roc.sort_values().unique()[1]
+            roc = roc.apply(lambda x: self.handle_inf_val(x, lowest_finite, highest_finite))
+        X_copy[self.new_col_name] = roc
         return X_copy
 
 
@@ -113,6 +125,40 @@ class DistanceExtractor(BaseEstimator, TransformerMixin):
         return X_copy
 
 
+class VelocityExtractor(BaseEstimator, TransformerMixin):
+    def __init__(self, handle_inf=True, new_col_name=None):
+        self.handle_inf = handle_inf
+        self.new_col_name = 'Velocity x-y' if new_col_name is None else new_col_name
+
+    def fit(self, X, y=None):
+        return self
+
+    def handle_inf_val(self, x, lowest_finite, highest_finite):
+            if np.isneginf(x):
+                return lowest_finite
+            elif np.isposinf(x):
+                return highest_finite
+            elif np.isnan(x):
+                return 0
+            else:
+                return x
+
+    def transform(self, X, y=None):
+        X_copy = X.copy()
+        num_change_ext = DistanceExtractor(('X', 'Y'))
+        denom_change_ext = ChangeExtractor('Time')
+        num_change = num_change_ext.transform(X_copy)[num_change_ext.new_col_name]
+        denom_change = denom_change_ext.transform(X_copy)[denom_change_ext.new_col_name]
+        roc = num_change / denom_change
+        if self.handle_inf:
+            highest_finite = roc.sort_values().unique()[-3 if True in roc.isna().unique() else -2]
+            lowest_finite = roc.sort_values().unique()[1]
+            roc = roc.apply(lambda x: self.handle_inf_val(x, lowest_finite, highest_finite))
+        X_copy[self.new_col_name] = roc
+        return X_copy
+
+
+
 feature_extraction_pipe = Pipeline([
     ('disp_x', ChangeExtractor('X', new_col_name='Displacement x')),
     ('disp_y', ChangeExtractor('Y', new_col_name='Displacement y')),
@@ -120,22 +166,24 @@ feature_extraction_pipe = Pipeline([
     ('dist_x', DistanceExtractor('X')),
     ('dist_y', DistanceExtractor('Y')),
     ('dist_xy', DistanceExtractor(('X', 'Y'))),
+
+    ('vel_x', ROCExtractor('X', 'Time', new_col_name='Velocity x')),
+    ('vel_y', ROCExtractor('Y', 'Time', new_col_name='Velocity y')),
+    ('vel_xy', VelocityExtractor()),
+
+    ('acc_x', ROCExtractor('Velocity x', 'Time', new_col_name='Acceleration x')),
+    ('acc_y', ROCExtractor('Velocity y', 'Time', new_col_name='Acceleration y')),
+    ('acc_xy', ROCExtractor('Velocity x-y', 'Time', new_col_name='Acceleration x-y')),
+
+    ('jerk_x', ROCExtractor('Acceleration x', 'Time', new_col_name='Jerk x')),
+    ('jerk_y', ROCExtractor('Acceleration y', 'Time', new_col_name='Jerk y')),
+    ('jerk_xy', ROCExtractor('Acceleration x-y', 'Time', new_col_name='Jerk x-y')),
+
+    ('roc_p', ROCExtractor('P', 'Time')),
     
-    ('ch_disp_x', ChangeExtractor('Displacement x')),
-    ('ch_disp_y', ChangeExtractor('Displacement y')),
-    ('ch_dist_xy', ChangeExtractor('Distance x-y')),
-
-    ('ch_disp_x2', ChangeExtractor('Change displacement x', new_col_name="2nd change displacement x")),
-    ('ch_disp_y2', ChangeExtractor('Change displacement y', new_col_name="2nd change displacement y")),
-    ('ch_dist_xy2', ChangeExtractor('Change distance x-y', new_col_name="2nd change distance x-y")),
-
-    ('ch_disp_x3', ChangeExtractor("2nd change displacement x", new_col_name="3rd change displacement x")),
-    ('ch_disp_y3', ChangeExtractor("2nd change displacement y", new_col_name="3rd change displacement y")),
-    ('ch_dist_xy3', ChangeExtractor("2nd change distance x-y", new_col_name="3rd change distance x-y")),
-
-    ('ch_press', ChangeExtractor('P')),
-    ('ch_al', ChangeExtractor('Al')),
-    ('ch_az', ChangeExtractor('Az')),
+    ('roc_al', ROCExtractor('Al', 'Time')),
+    
+    ('roc_az', ROCExtractor('Az', 'Time')),
 
     ('slope', ROCExtractor('Y', 'X', new_col_name='Slope')),
 ])
@@ -168,7 +216,7 @@ def extract_features(data, pipe=feature_extraction_pipe):
 
         data_extracted = pd.concat([data_extracted, ext_img])
     
-    print('The following features were extracted successfully:\n', data_extracted.columns[7:])
+    print('The following features were extracted successfully:', list(data_extracted.columns[7:]))
     print('Number of features:', data_extracted.columns[7:].shape[0])
 
     return data_extracted

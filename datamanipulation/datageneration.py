@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split as sktts
 from dataaccess.filedatareader import FileDataReader
 
 
-def get_pd_hc_only(info, data, keep_label=True):
+def get_pd_hc_only(info, data):
     """
     Return data of only PDs and HCs.
 
@@ -25,10 +25,6 @@ def get_pd_hc_only(info, data, keep_label=True):
     info = info[info[label_key]>=0]
     data = data.reset_index(['Language', 'Task'])
     data = info[[label_key]].merge(data, left_on='ID', right_on='ID')
-
-    if not keep_label:
-        info.drop(label_key, axis=1, inplace=True)
-        data.drop(label_key, axis=1, inplace=True)
     
     data.reset_index('ID', inplace=True)
     data = FileDataReader('.')._postprocess_tasks_dataframe(data)
@@ -37,10 +33,14 @@ def get_pd_hc_only(info, data, keep_label=True):
 
 
 def stratified_train_test_split(info, data, label_key, test_size=0.3, random_state=42):
-    data_participants = data[[label_key]].groupby(['ID', 'Language', 'Task']).first()
+    df = data.groupby(['ID', 'Language', 'Task']).first()
+    df.reset_index(['Language', 'Task'], inplace=True)
+    df = df.merge(info, on='ID').reset_index('ID').set_index(['ID', 'Language', 'Task'])
 
-    X = data_participants.index
-    y = data_participants[label_key]
+    label_key += '_x'
+
+    X = df.index
+    y = df.reset_index()[[label_key, 'Gender']]
 
     X_train, X_test, y_train, y_test = sktts(X, y, stratify=y, random_state=random_state)
 
@@ -53,6 +53,34 @@ def stratified_train_test_split(info, data, label_key, test_size=0.3, random_sta
     data_test = data.loc[X_test].sort_index()
 
     return info_train, info_test, data_train, data_test
+
+
+def match_age_gender_pd(info, data):
+    """
+    Match PDs and HCs in age and gender.
+
+    Args:
+        info (pandas.DataFrame): The info dataframe.
+        data (pandas.DataFrame): The data dataframe.
+        
+    Returns:
+        info, data (pandas.DataFrame): An age and gender matched info and data dataframes.
+    """
+    df = info.merge(data.groupby('ID').first(), left_on='ID', right_on='ID')
+    min_age, max_age = df[df['PD_x']==1]['Age'].sort_values()[[0, -1]]
+    num_females, num_males = df[(df['PD_x']==1) & (df['Age']>=min_age) & (df['Age']<=max_age)].groupby('Gender').count()['Age'].sort_values()
+    age_matched_hcs = df[(df['PD_x']==0) & (df['Age']>=min_age) & (df['Age']<=max_age)]
+    f_hcs = age_matched_hcs[age_matched_hcs['Gender']=='Female']
+    m_hcs = age_matched_hcs[age_matched_hcs['Gender']=='Male']
+
+    import numpy as np
+    np.random.seed(seed=42)
+    f_ixs = np.random.choice(f_hcs.shape[0], num_females, replace=False)
+    m_ixs = np.random.choice(m_hcs.shape[0], num_males, replace=False)
+
+    to_keep = list(df[df['PD_x']==1].index) + list(f_hcs.iloc[f_ixs].index) + list(m_hcs.iloc[m_ixs].index)
+    
+    return info.loc[to_keep], data.loc[to_keep]
 
 
 def get_images(data, label_key):
