@@ -83,29 +83,15 @@ def match_age_gender_pd(info, data):
     return info.loc[to_keep], data.loc[to_keep]
 
 
-def get_images(data, label_key):
-    """
-    Return data as images for use when training a model.
-
-    Args:
-        data (pandas.core.frame.DataFrame): The data dataframe.
-        label_key (str): The key of the column to be used as the label.
-
-    Returns:
-        X (list of 2-D numpy.ndarray): A multidimentional array of images of tasks' data for each participant.
-        y (numpy.ndarray): A one-dimensional array of the labels of the images.
-    """
+def get_samples(data, label_key):
     X = list()
     y = list()
-
-    exercices = data.groupby(['ID', 'Language', 'Task', label_key]).first().index
-
-    for id_, lang, task, label in exercices:
-        img = data.loc['ID'][(data.loc['ID']['Language'] == lang) & (data.loc['ID']['Task'] == task)]
-        img = img[['Time', 'X', 'Y', 'P', 'Az', 'Al']]
-        img.sort_values(['Time'], inplace=True)
-        X.append(img.values)
-        y.append(label)
+    cols = list(data.columns)
+    cols.remove(label_key)
+    
+    for ix in data.index.unique():
+        X.append(data.loc[ix][cols].values)
+        y.append(data.loc[ix].iloc[0][label_key])
 
     y = np.array(y)
 

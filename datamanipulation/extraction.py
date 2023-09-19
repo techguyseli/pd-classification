@@ -158,6 +158,24 @@ class VelocityExtractor(BaseEstimator, TransformerMixin):
         return X_copy
 
 
+class SlantExtractor(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.new_col_name = 'Slant'
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        X_copy = X.copy()
+        num_change_ext = ChangeExtractor('Y')
+        denom_change_ext = ChangeExtractor('X')
+        num_change = num_change_ext.transform(X_copy)[num_change_ext.new_col_name]
+        denom_change = denom_change_ext.transform(X_copy)[denom_change_ext.new_col_name]
+        roc = np.rad2deg(np.arctan(num_change / denom_change))
+        roc = roc.apply(lambda x: 0 if np.isnan(x) else x)
+        X_copy[self.new_col_name] = roc
+        return X_copy
+
 
 feature_extraction_pipe = Pipeline([
     ('disp_x', ChangeExtractor('X', new_col_name='Displacement x')),
@@ -186,6 +204,7 @@ feature_extraction_pipe = Pipeline([
     ('roc_az', ROCExtractor('Az', 'Time')),
 
     ('slope', ROCExtractor('Y', 'X', new_col_name='Slope')),
+    ('slant', SlantExtractor()),
 ])
 
 
