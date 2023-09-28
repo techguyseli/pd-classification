@@ -42,7 +42,7 @@ def stratified_train_test_split(info, data, label_key, test_size=0.3, random_sta
     X = df.index
     y = df.reset_index()[[label_key, 'Gender']]
 
-    X_train, X_test, y_train, y_test = sktts(X, y, stratify=y, random_state=random_state)
+    X_train, X_test, y_train, y_test = sktts(X, y, stratify=y, random_state=random_state, test_size=test_size)
 
     info_X_train = np.apply_along_axis(lambda x: list(x), 0, X_train)[:,0]
     info_X_test = np.apply_along_axis(lambda x: list(x), 0, X_test)[:,0]
