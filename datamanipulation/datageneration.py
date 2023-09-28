@@ -32,7 +32,7 @@ def get_pd_hc_only(info, data):
     return info, data
 
 
-def stratified_train_test_split(info, data, label_key, test_size=0.3, random_state=42):
+def stratified_train_test_split(info, data, label_key, test_size=0.25, random_state=42):
     df = data.groupby(['ID', 'Language', 'Task']).first()
     df.reset_index(['Language', 'Task'], inplace=True)
     df = df.merge(info, on='ID').reset_index('ID').set_index(['ID', 'Language', 'Task'])
